@@ -11,12 +11,13 @@
 			$newItem['startDate'] = str_replace('-', ',', $item['date']);
 			$endDate = strtotime($item['date'].' +1 days');
 			$newItem['endDate'] = date('Y,m,d', $endDate);
-			$newItem['headline'] = $item['title'];
-			$newItem['text'] = $item['text'];
+			$newItem['headline'] = stripslashes($item['title']);
+			$newItem['text'] = stripslashes($item['text']);
 			$newItem['tag'] = $item['tag'];
+			$newItem['tag_list'] = $item['tag_list'];
 			$newItem['asset'] = array(
 				'media' => $item['asset'],
-				'caption' => $item['caption'],
+				'caption' => stripslashes($item['caption']),
 			);
 			$events[] = $newItem;
 		}

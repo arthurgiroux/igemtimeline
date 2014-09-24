@@ -68,9 +68,9 @@
 	    	while ($item = $select->fetch()) {
 	    		?>
 	    			<tr>
-	    				<td><?php echo htmlspecialchars($item['date']); ?></td>
-	    				<td><?php echo htmlspecialchars($item['title']); ?></td>
-	    				<td><?php echo htmlspecialchars($item['tag']); ?></td>
+	    				<td><?php echo htmlspecialchars(stripslashes($item['date'])); ?></td>
+	    				<td><?php echo htmlspecialchars(stripslashes($item['title'])); ?></td>
+	    				<td><?php echo htmlspecialchars(stripslashes($item['tag'])); ?></td>
 	    				<td><a href="/igem/edit.php?id=<?php echo htmlspecialchars($item['id']); ?>" class="btn btn-primary">Edit</a></td>
 	                </tr>
 	    		<?php

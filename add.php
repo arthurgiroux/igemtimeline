@@ -9,20 +9,40 @@
 
 	if (!empty($_POST)) {
 
-		$insertQuery = $dbh->prepare("INSERT INTO `igem_posts`(`title` ,`text` ,`date` ,`tag` ,`asset` ,`caption`) VALUES(?, ?, ?, ?, ?, ?)");
+		$insertQuery = $dbh->prepare("INSERT INTO `igem_posts`(`title` ,`text` ,`date` ,`tag` ,`asset` ,`caption`, `tag_list`) VALUES(?, ?, ?, ?, ?, ?, ?)");
 		
 		$data = array($_POST['title'],
 			$_POST['text'],
 			$_POST['date'],
 			$_POST['tag'],
 			$_POST['asset'],
-			$_POST['caption']
+			$_POST['caption'],
+			$_POST['tag_list']
 		);
 
 		$insertQuery->execute($data);
+
+		$insertTags = $dbh->prepare("INSERT INTO `igem_tags`(`name`) VALUES(?)");
+
+		$tags = explode(",", $_POST['tag_list']);
+
+		foreach ($tags as $tag) {
+			$insertTags->execute(array($tag));
+		}
+
 		updateIGEM(getJSON($dbh), $igem_username, $igem_password);
 		header('Location: index.php');
 	}
+
+
+	$select = $dbh->query('SELECT * FROM `igem_tags` ORDER BY `name` ASC');
+
+	$tags = array();
+	while ($item = $select->fetch()) {
+		$tags[] = $item['name'];
+	}
+
+	$tags = implode(",", $tags);
 
 ?>
 
@@ -40,6 +60,7 @@
     <link href="css/summernote.css" rel="stylesheet" media="screen">
     <link href="css/summernote-bs3.css" rel="stylesheet" media="screen">
     <link href="css/datepicker.css" rel="stylesheet" media="screen">
+    <link href="css/bootstrap-tagsinput.css" rel="stylesheet" media="screen">
 
 
     <style type="text/css">
@@ -85,16 +106,29 @@
 		  <div class="form-group">
 		    <label for="team">Team</label>
 			<select class="form-control" name="tag">
-			  <option value="Yeast">Yeast</option>
-			  <option value="Bacteria">Bacteria</option>
-			  <option value="Microfluidics">Microfluidics</option>
-			  <option value="I.T">I.T</option>
+				<option value="General">General</option>
+				<option value="Yeast">Yeast</option>
+				<option value="Bacteria">Bacteria</option>
+				<option value="Microfluidics">Microfluidics</option>
+				<option value="I.T">I.T</option>
 			</select>
 		  </div>
+
+		  <div class="form-group">
+		  <label for="tag_list">Tags</label>
+			<input type="text" value="" name="tag_list" class="form-control" id="tag_list" />
+		  </div>
+
+		  <div class="form-group">
+		  <label for="">Available tags</label>
+			<input type="text" value="<?php echo $tags; ?>" data-role="tagsinput" />
+		  </div>
+
+
 		  <div class="form-group">
 		    <label for="asset">Asset (image or twitter or youtube)</label>
 		    <input type="text" class="form-control" id="asset" name="asset" />
-		    <span class="help-block"><a href="http://igem.org/Special:Upload" target="_blank">Upload on iGEM's server</a></span>
+		    <span class="help-block"><a href="http://2014.igem.org/Special:Upload" target="_blank">Upload on iGEM's server</a></span>
 		  </div>
 
 		  <div class="form-group">
@@ -114,12 +148,50 @@
     <script src="js/bootstrap.min.js"></script>
     <script src="js/summernote.min.js"></script>
     <script src="js/bootstrap-datepicker.js"></script>
+    <script src="js/typeahead.bundle.js"></script>
+    <script src="js/bootstrap-tagsinput.min.js"></script>
     <script type="text/javascript">
 		$(document).ready(function() {
-		  $('.summernote').summernote();
-		  $('.datepicker').datepicker({ format:'yyyy-mm-dd' });
-		});
+			$('.summernote').summernote();
+			$('.datepicker').datepicker({ format:'yyyy-mm-dd' });
 
+			var substringMatcher = function(strs) {
+			  return function findMatches(q, cb) {
+
+			  	console.log('searching');
+			    var matches, substrRegex;
+			 
+			    // an array that will be populated with substring matches
+			    matches = [];
+			 
+			    // regex used to determine if a string contains the substring `q`
+			    substrRegex = new RegExp(q, 'i');
+			 
+			    // iterate through the pool of strings and for any string that
+			    // contains the substring `q`, add it to the `matches` array
+			    $.each(strs, function(i, str) {
+			      if (substrRegex.test(str)) {
+			        // the typeahead jQuery plugin expects suggestions to a
+			        // JavaScript object, refer to typeahead docs for more info
+			        matches.push({ value: str });
+			      }
+			    });
+			 
+			    cb(matches);
+			  };
+			};
+
+			var tags = <?php echo json_encode(explode(",", $tags)); ?>;
+
+			$('#tag_list').tagsinput({
+			  typeaheadjs: {
+			    name: 'tags',
+			    displayKey: 'value',
+			    valueKey: 'value',
+			    source: substringMatcher(tags)
+			  }
+			});
+		});
     </script>
   </body>
 </html>

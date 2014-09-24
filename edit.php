@@ -8,7 +8,7 @@
 
 	if (!empty($_POST)) {
 
-		$insertQuery = $dbh->prepare("UPDATE `igem_posts` SET `title`=?, `text`=?, `date`=?, `tag`=?, `asset`=?, `caption`=? WHERE id=?");
+		$insertQuery = $dbh->prepare("UPDATE `igem_posts` SET `title`=?, `text`=?, `date`=?, `tag`=?, `asset`=?, `caption`=?, `tag_list`=? WHERE id=?");
 		
 		$data = array(
 			$_POST['title'],
@@ -17,18 +17,37 @@
 			$_POST['tag'],
 			$_POST['asset'],
 			$_POST['caption'],
+			$_POST['tag_list'],
 			$_GET['id']
 		);
 
 		$insertQuery->execute($data);
+
+		$insertTags = $dbh->prepare("INSERT INTO `igem_tags`(`name`) VALUES(?)");
+
+		$tags = explode(",", $_POST['tag_list']);
+
+		foreach ($tags as $tag) {
+			$insertTags->execute(array($tag));
+		}
 
 		updateIGEM(getJSON($dbh), $igem_username, $igem_password);
 		header('Location: index.php');
 	}
 	else {
 		$select = $dbh->prepare('SELECT * FROM `igem_posts` WHERE `id`=?');
-		 $select->execute(array($_GET['id']));
+		$select->execute(array($_GET['id']));
 		$item = $select->fetch();
+
+		$select = $dbh->query('SELECT * FROM `igem_tags` ORDER BY `name` ASC');
+
+		$tags = array();
+		while ($tag = $select->fetch()) {
+			$tags[] = $tag['name'];
+		}
+
+		$tags = implode(",", $tags);
+
 	}
 
 ?>
@@ -47,6 +66,7 @@
     <link href="css/summernote.css" rel="stylesheet" media="screen">
     <link href="css/summernote-bs3.css" rel="stylesheet" media="screen">
     <link href="css/datepicker.css" rel="stylesheet" media="screen">
+    <link href="css/bootstrap-tagsinput.css" rel="stylesheet" media="screen">
 
     <style type="text/css">
 		body {
@@ -78,11 +98,11 @@
 		<form role="form" method="post">
 		  <div class="form-group">
 		    <label for="title">Title</label>
-		    <input type="text" class="form-control" id="title" name="title" value="<?php echo htmlspecialchars($item['title']); ?>" />
+		    <input type="text" class="form-control" id="title" name="title" value="<?php echo htmlspecialchars(stripslashes($item['title'])); ?>" />
 		  </div>
 		  <div class="form-group">
 		    <label for="text">Text</label>
-		    <textarea class="form-control summernote" rows="5" name="text"><?php echo htmlspecialchars($item['text']); ?></textarea>
+		    <textarea class="form-control summernote" rows="5" name="text"><?php echo htmlspecialchars(stripslashes($item['text'])); ?></textarea>
 		  </div>
 		  <div class="form-group">
 		    <label for="date">Date</label>
@@ -91,6 +111,7 @@
 		  <div class="form-group">
 		    <label for="team">Team</label>
 			<select class="form-control" name="tag">
+			  <option value="General" <?php if ($item['tag'] == 'General'): ?>selected<?php endif; ?>>General</option>
 			  <option value="Yeast" <?php if ($item['tag'] == 'Yeast'): ?>selected<?php endif; ?>>Yeast</option>
 			  <option value="Bacteria" <?php if ($item['tag'] == 'Bacteria'): ?>selected<?php endif; ?>>Bacteria</option>
 			  <option value="Microfluidics" <?php if ($item['tag'] == 'Microfluidics'): ?>selected<?php endif; ?>>Microfluidics</option>
@@ -98,14 +119,23 @@
 			</select>
 		  </div>
 		  <div class="form-group">
+		  <label for="tag_list">Tags</label>
+			<input type="text" value="<?php echo $item['tag_list']; ?>" name="tag_list" id="tag_list" />
+		  </div>
+
+		  <div class="form-group">
+		  <label for="">Available tags</label>
+			<input type="text" value="<?php echo $tags; ?>" data-role="tagsinput" />
+		  </div>
+		  <div class="form-group">
 		    <label for="asset">Asset (image or twitter or youtube)</label>
 		    <input type="text" class="form-control" id="asset" name="asset" value="<?php echo htmlspecialchars($item['asset']); ?>" />
-		    <span class="help-block"><a href="http://igem.org/Special:Upload" target="_blank">Upload on iGEM's server</a></span>
+		    <span class="help-block"><a href="http://2014.igem.org/Special:Upload" target="_blank">Upload on iGEM's server</a></span>
 		  </div>
 
 		  <div class="form-group">
 		    <label for="title">Caption</label>
-		    <input type="text" class="form-control" id="caption" name="caption" value="<?php echo htmlspecialchars($item['caption']); ?>" />
+		    <input type="text" class="form-control" id="caption" name="caption" value="<?php echo htmlspecialchars(stripslashes($item['caption'])); ?>" />
 		  </div>
 
 		  <div style="text-align: center;">
@@ -120,10 +150,48 @@
     <script src="js/bootstrap.min.js"></script>
     <script src="js/summernote.min.js"></script>
     <script src="js/bootstrap-datepicker.js"></script>
+    <script src="js/typeahead.bundle.js"></script>
+    <script src="js/bootstrap-tagsinput.min.js"></script>
     <script type="text/javascript">
 		$(document).ready(function() {
 		  $('.summernote').summernote();
 		  $('.datepicker').datepicker({ format:'yyyyy-mm-dd' });
+			var substringMatcher = function(strs) {
+			  return function findMatches(q, cb) {
+
+			  	console.log('searching');
+			    var matches, substrRegex;
+			 
+			    // an array that will be populated with substring matches
+			    matches = [];
+			 
+			    // regex used to determine if a string contains the substring `q`
+			    substrRegex = new RegExp(q, 'i');
+			 
+			    // iterate through the pool of strings and for any string that
+			    // contains the substring `q`, add it to the `matches` array
+			    $.each(strs, function(i, str) {
+			      if (substrRegex.test(str)) {
+			        // the typeahead jQuery plugin expects suggestions to a
+			        // JavaScript object, refer to typeahead docs for more info
+			        matches.push({ value: str });
+			      }
+			    });
+			 
+			    cb(matches);
+			  };
+			};
+
+			var tags = <?php echo json_encode(explode(",", $tags)); ?>;
+
+			$('#tag_list').tagsinput({
+			  typeaheadjs: {
+			    name: 'tags',
+			    displayKey: 'value',
+			    valueKey: 'value',
+			    source: substringMatcher(tags)
+			  }
+			});
 		});
 	</script>
   </body>
