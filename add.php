@@ -30,7 +30,7 @@
 			$insertTags->execute(array($tag));
 		}
 
-		updateIGEM(getJSON($dbh), $igem_username, $igem_password);
+		updateIGEM("Template:JS/EPFL_timeline_json", getJSON($dbh), $igem_username, $igem_password);
 		header('Location: index.php');
 	}
 
@@ -86,9 +86,14 @@
           </button>
           <a class="navbar-brand" href="/igem/">iGEM</a>
         </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav">
+            <li class="active"><a href="index.php">Timeline</a></li>
+            <li><a href="notebook.php">Notebook</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
       </div>
     </div>
-
     <div class="container">
 		<form role="form" method="post">
 		  <div class="form-group">

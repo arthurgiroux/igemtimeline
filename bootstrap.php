@@ -35,7 +35,7 @@
 		return json_encode($jsonArray);
 	}
 
-	function updateIGEM($json, $username, $password) {
+	function updateIGEM($title, $text, $username, $password) {
 
 		$ch = curl_init();		
 		// LOGIN
@@ -64,7 +64,7 @@
 
 		// GET TOKEN
 
-		curl_setopt($ch, CURLOPT_URL, "http://2014.igem.org/wiki/index.php?title=Template:JS/EPFL_timeline_json&action=edit");
+		curl_setopt($ch, CURLOPT_URL, "http://2014.igem.org/wiki/index.php?title=".$title."&action=edit");
 		curl_setopt($ch, CURLOPT_POST, false);
 
 		$server_output = curl_exec($ch);
@@ -73,7 +73,7 @@
 
 
 		// POST JSON
-		curl_setopt($ch, CURLOPT_URL, "http://2014.igem.org/wiki/index.php?title=Template:JS/EPFL_timeline_json&action=submit");
+		curl_setopt($ch, CURLOPT_URL, "http://2014.igem.org/wiki/index.php?title=".$title."&action=submit");
 		curl_setopt($ch, CURLOPT_POST, true);
 		curl_setopt($ch, CURLOPT_POSTFIELDS, 
 		          array(
@@ -84,7 +84,7 @@
 		          	'oldid' => 0,
 		          	'wpSummary' => '',
 		          	'wpAutoSummary' => 'd41d8cd98f00b204e9800998ecf8427e',
-		          	'wpTextbox1' => $json,
+		          	'wpTextbox1' => $text,
 		          	'wpSave' => 'Save page',
 		          	'wpEditToken' => $token[1],
 		          	));
@@ -93,5 +93,25 @@
 
 		curl_close ($ch);
 
+	}
+
+	function updateNotebook($dbh, $team, $username, $password) {
+		$select = $dbh->prepare('SELECT * FROM `igem_notebook` WHERE `team`=? ORDER BY `date` ASC');
+		$select->execute(array($team));
+
+		$html = file_get_contents('templateigem_top.html');
+
+		while ($item = $select->fetch()) {
+			$html .= '<div class="notebook-item">';
+
+			$html .= '<h3>'.htmlspecialchars(stripslashes($item['title'])).'</h3>';
+			$html .= '<span>'.htmlspecialchars(stripslashes($item['date'])).'</span>';
+			$html .= '<div class="notebook-content">'.stripslashes($item['text']).'</div>';
+			$html .= '<hr /></div>';
+		}
+
+		$html .= file_get_contents('templateigem_bottom.html');
+
+	 	updateIGEM('Team:EPF_Lausanne/Notebook/'.$team, $html, $username, $password);
 	}
 ?>

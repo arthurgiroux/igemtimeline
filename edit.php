@@ -31,7 +31,7 @@
 			$insertTags->execute(array($tag));
 		}
 
-		updateIGEM(getJSON($dbh), $igem_username, $igem_password);
+		updateIGEM("Template:JS/EPFL_timeline_json", getJSON($dbh), $igem_username, $igem_password);
 		header('Location: index.php');
 	}
 	else {

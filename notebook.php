@@ -2,9 +2,9 @@
     include_once('config.php');
     include_once('bootstrap.php');
 
-	$dbh = new PDO('mysql:host='.$host.';dbname='.$database, $user, $password);
+  $dbh = new PDO('mysql:host='.$host.';dbname='.$database, $user, $password);
 
-	$dbh->exec("SET NAMES UTF8");
+  $dbh->exec("SET NAMES UTF8");
 
 ?>
 
@@ -20,15 +20,15 @@
     <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
 
     <style type="text/css">
-		body {
-		  padding-top: 80px;
-		}
-    	td img {
-    		padding: 2px;
-    	}
-    	table {
-    		margin-top: 20px;
-    	}
+    body {
+      padding-top: 80px;
+    }
+      td img {
+        padding: 2px;
+      }
+      table {
+        margin-top: 20px;
+      }
     </style>
   </head>
   <body>
@@ -44,47 +44,48 @@
         </div>
         <div class="collapse navbar-collapse">
           <ul class="nav navbar-nav">
-            <li class="active"><a href="index.php">Timeline</a></li>
-            <li><a href="notebook.php">Notebook</a></li>
+            <li><a href="index.php">Timeline</a></li>
+            <li class="active"><a href="notebook.php">Notebook</a></li>
           </ul>
         </div><!--/.nav-collapse -->
       </div>
     </div>
 
+
     <div class="container">
 
     <div style="text-align: right;">
-    	<a href="add.php" class="btn btn-primary">Add</a>
-	</div>
+      <a href="add_notebook.php" class="btn btn-primary">Add</a>
+  </div>
 
-	<table class="table table-striped">
-	  <thead>
-	  	<tr>
-	  		<th>Date</th>
-	  		<th>Title</th>
-	  		<th>Team</th>
-	  		<th>Action</th>
-	  	</tr>
-	  </thead>
-	  <tbody>
+  <table class="table table-striped">
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Title</th>
+        <th>Team</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
 
-	    <?php
-	    	$select = $dbh->query('SELECT * FROM `igem_posts` ORDER BY `id` DESC');
+      <?php
+        $select = $dbh->query('SELECT * FROM `igem_notebook` ORDER BY `id` DESC');
 
-	    	while ($item = $select->fetch()) {
-	    		?>
-	    			<tr>
-	    				<td><?php echo htmlspecialchars(stripslashes($item['date'])); ?></td>
-	    				<td><?php echo htmlspecialchars(stripslashes($item['title'])); ?></td>
-	    				<td><?php echo htmlspecialchars(stripslashes($item['tag'])); ?></td>
-	    				<td><a href="edit.php?id=<?php echo htmlspecialchars($item['id']); ?>" class="btn btn-primary">Edit</a></td>
-	                </tr>
-	    		<?php
-	    	}
-	    ?>
-	    </tbody>
-	</table>
-	</div>
+        while ($item = $select->fetch()) {
+          ?>
+            <tr>
+              <td><?php echo htmlspecialchars(stripslashes($item['date'])); ?></td>
+              <td><?php echo htmlspecialchars(stripslashes($item['title'])); ?></td>
+              <td><?php echo htmlspecialchars(stripslashes($item['team'])); ?></td>
+              <td><a href="edit_notebook.php?id=<?php echo htmlspecialchars($item['id']); ?>" class="btn btn-primary">Edit</a></td>
+                  </tr>
+          <?php
+        }
+      ?>
+      </tbody>
+  </table>
+  </div>
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="http://code.jquery.com/jquery.js"></script>
